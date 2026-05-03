@@ -27,6 +27,9 @@ async function getProducts() {
 	// 1. 使用 fetch() 發送 GET 請求
 	// 2. 使用 response.json() 解析回應
 	// 3. 回傳 data.products
+	const response = await fetch(`${BASE_URL}/api/livejs/v1/customer/${API_PATH}/products`);
+  	const data = await response.json();
+  	return data.products;
 }
 
 /**
@@ -35,6 +38,10 @@ async function getProducts() {
  */
 async function getCart() {
 	// 請實作此函式
+	const response = await fetch(`${BASE_URL}/api/livejs/v1/customer/${API_PATH}/carts`);
+	const data = await response.json();
+	const { carts, total, finalTotal } = data;
+	return { carts, total, finalTotal };
 }
 
 /**
@@ -48,6 +55,19 @@ async function getProductsSafe() {
 	// 2. 檢查 response.ok 判斷是否成功
 	// 3. 成功回傳 { success: true, data: [...] }
 	// 4. 失敗回傳 { success: false, error: '錯誤訊息' }
+	try {
+		const response = await fetch(`${BASE_URL}/api/livejs/v1/customer/${API_PATH}/products`);
+  		const data = await response.json();
+  		return  { success: true, data: data .products };
+
+		if (!response.ok){
+			return { success: false, error: data.message };
+		}
+
+	} catch (error) {
+		console.log(error);
+		return { success: false, error: error.message };
+	}
 }
 
 // ========================================

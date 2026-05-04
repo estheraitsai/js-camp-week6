@@ -87,6 +87,20 @@ async function addToCart(productId, quantity) {
 	// 2. body 格式：{ data: { productId: "xxx", quantity: 1 } }
 	// 3. 記得設定 headers: { 'Content-Type': 'application/json' }
 	// 4. body 要用 JSON.stringify() 轉換
+	const response = await fetch (`${BASE_URL}/api/livejs/v1/customer/${API_PATH}/carts`,{
+		method: 'POST',
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify(
+			{
+			"data": {
+				productId,
+				quantity, 
+			},
+			}),
+	},
+); 
+const data = await response.json();
+return data ;
 }
 
 /**

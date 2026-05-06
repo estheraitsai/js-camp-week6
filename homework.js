@@ -92,7 +92,7 @@ async function addToCart(productId, quantity) {
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify(
 			{
-			"data": {
+			data: {
 				productId,
 				quantity, 
 			},
@@ -114,6 +114,19 @@ async function updateCartItem(cartId, quantity) {
 	// 提示：
 	// 1. 發送 PATCH 請求
 	// 2. body 格式：{ data: { id: "購物車ID", quantity: 數量 } }
+	const response = await fetch (`${BASE_URL}/api/livejs/v1/customer/${API_PATH}/carts`,{
+		method: 'PATCH',
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({
+			data: {
+			id: cartId,
+			quantity,
+			},
+		}),
+	},
+);
+const data = await response.json();
+return data;
 }
 
 /**
@@ -124,6 +137,12 @@ async function updateCartItem(cartId, quantity) {
 async function removeCartItem(cartId) {
 	// 請實作此函式
 	// 提示：發送 DELETE 請求到 /carts/{id}
+	const response = await fetch (`${BASE_URL}/api/livejs/v1/customer/${API_PATH}/carts/${cartId}`,{
+		method: 'DELETE',
+	},
+); 
+const data = await response.json();
+return data; 
 }
 
 /**
@@ -133,6 +152,12 @@ async function removeCartItem(cartId) {
 async function clearCart() {
 	// 請實作此函式
 	// 提示：發送 DELETE 請求到 /carts
+	const response = await fetch (`${BASE_URL}/api/livejs/v1/customer/${API_PATH}/carts`,{
+		method: 'DELETE',
+	},
+); 
+const data = await response.json();
+return data; 
 }
 
 // ========================================

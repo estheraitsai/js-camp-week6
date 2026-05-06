@@ -57,16 +57,24 @@ async function getProductsSafe() {
 	// 4. 失敗回傳 { success: false, error: '錯誤訊息' }
 	try {
 		const response = await fetch(`${BASE_URL}/api/livejs/v1/customer/${API_PATH}/products`);
-  		const data = await response.json();
-  		return  { success: true, data: data .products };
+		const data = await response.json();
 
-		if (!response.ok){
-			return { success: false, error: data.message };
+		if (!response.ok) {
+			return {
+				success: false,
+				error: data.message || "取得產品列表失敗",
+			};
 		}
 
+		return {
+			success: true,
+			data: data.products,
+		};
 	} catch (error) {
-		console.log(error);
-		return { success: false, error: error.message };
+		return {
+			success: false,
+			error: error.message,
+		};
 	}
 }
 
@@ -169,13 +177,58 @@ return data;
 
 1. HTTP 狀態碼的分類（1xx, 2xx, 3xx, 4xx, 5xx 各代表什麼）
    答：
+   HTTP 狀態碼是前端發出請求時，伺服器回應，用來表示「請求處理結果」的代碼。
+
+   1xx：資訊回應
+   代表請求已收到，伺服器正在繼續處理中。
+	
+   2xx：成功
+   代表請求成功，伺服器已正確處理。
+
+   3xx：重新導向
+   代表請求的資源位置有變動，需要到其他位置取得。
+
+   4xx：用戶端錯誤
+   代表前端送出的請求有問題，例如網址錯、權限不足、資料格式錯誤。
+
+   5xx：伺服器錯誤
+   代表請求本身可能沒問題，但伺服器處理時發生錯誤。
 
 2. GET、POST、PATCH、PUT、DELETE 的差異
    答：
+   GET：用來取得資料，不會修改伺服器資料。
+   例如：取得商品列表、取得購物車內容。
+
+   POST：用來新增資料，通常會建立一筆新的資源。
+   例如：新增商品到購物車、建立訂單。
+
+   PATCH：用來「部分更新」資料，只修改指定欄位。
+   例如：只修改購物車商品的數量。
+
+   PUT：用來「完整更新」資料，通常會用新的資料取代原本整筆資源。
+   例如：更新整筆會員資料或整筆商品資料。
+
+   DELETE：用來刪除資料。
+   例如：刪除購物車某一項商品、清空購物車。
 
 3. 什麼是 RESTful API？
    答：
+   把後端資料視為一個一個「資源」，再透過 HTTP 方法來操作這些資源。
 
+   如：
+   - 用網址表示資源
+     /products 代表商品列表
+     /carts 代表購物車
+     /orders 代表訂單
+
+   - 用 HTTP 方法表示要做的動作
+     GET 取得資料
+     POST 新增資料
+     PATCH / PUT 更新資料
+     DELETE 刪除資料
+
+   - 前後端透過統一格式交換資料
+     常見格式是 JSON。
 
 */
 
@@ -209,20 +262,36 @@ if (require.main === module) {
 			return;
 		}
 
-		// 任務一測試
+		let products = [];
+		let testProductId = "";
+		let testCartId = "";
+
+		// ========================================
+		// 任務一測試：基礎 fetch
+		// ========================================
 		console.log("--- 任務一：基礎 fetch ---");
+
 		try {
-			const products = await getProducts();
+			products = await getProducts();
+
 			console.log(
 				"getProducts:",
 				products ? `成功取得 ${products.length} 筆產品` : "回傳 undefined",
 			);
+
+			if (products && products.length > 0) {
+				testProductId = products[0].id;
+				console.log("測試用產品 ID:", testProductId);
+			} else {
+				console.log("目前沒有產品資料，後續購物車新增測試會略過");
+			}
 		} catch (error) {
 			console.log("getProducts 錯誤:", error.message);
 		}
 
 		try {
 			const cart = await getCart();
+
 			console.log(
 				"getCart:",
 				cart ? `購物車有 ${cart.carts?.length || 0} 筆商品` : "回傳 undefined",
@@ -233,12 +302,116 @@ if (require.main === module) {
 
 		try {
 			const result = await getProductsSafe();
+
 			console.log(
 				"getProductsSafe:",
 				result?.success ? "成功" : result?.error || "回傳 undefined",
 			);
 		} catch (error) {
 			console.log("getProductsSafe 錯誤:", error.message);
+		}
+
+		// ========================================
+		// 任務二測試：POST / PATCH / DELETE
+		// ========================================
+		console.log("\n--- 任務二：購物車操作 ---");
+
+		// 1. 加入商品到購物車
+		try {
+			if (!testProductId) {
+				console.log("addToCart: 略過，因為沒有可測試的產品 ID");
+			} else {
+				const addResult = await addToCart(testProductId, 1);
+
+				console.log(
+					"addToCart:",
+					addResult?.carts
+						? `成功加入購物車，目前 ${addResult.carts.length} 筆商品`
+						: "已送出請求，但回傳格式需確認",
+				);
+
+				if (addResult?.carts && addResult.carts.length > 0) {
+					testCartId = addResult.carts[0].id;
+					console.log("測試用購物車項目 ID:", testCartId);
+				}
+			}
+		} catch (error) {
+			console.log("addToCart 錯誤:", error.message);
+		}
+
+		// 2. 編輯購物車商品數量
+		try {
+			if (!testCartId) {
+				console.log("updateCartItem: 略過，因為沒有可測試的購物車項目 ID");
+			} else {
+				const updateResult = await updateCartItem(testCartId, 2);
+
+				console.log(
+					"updateCartItem:",
+					updateResult?.carts
+						? `成功更新數量，目前 ${updateResult.carts.length} 筆商品`
+						: "已送出請求，但回傳格式需確認",
+				);
+			}
+		} catch (error) {
+			console.log("updateCartItem 錯誤:", error.message);
+		}
+
+		// 3. 刪除購物車特定商品
+		try {
+			if (!testCartId) {
+				console.log("removeCartItem: 略過，因為沒有可測試的購物車項目 ID");
+			} else {
+				const removeResult = await removeCartItem(testCartId);
+
+				console.log(
+					"removeCartItem:",
+					removeResult?.carts
+						? `成功刪除商品，目前 ${removeResult.carts.length} 筆商品`
+						: "已送出請求，但回傳格式需確認",
+				);
+			}
+		} catch (error) {
+			console.log("removeCartItem 錯誤:", error.message);
+		}
+
+		// 4. 清空購物車
+		try {
+			// 為了確保 clearCart 有東西可以清，先再加入一筆商品
+			if (!testProductId) {
+				console.log("clearCart: 略過，因為沒有可測試的產品 ID");
+			} else {
+				await addToCart(testProductId, 1);
+
+				const clearResult = await clearCart();
+
+				console.log(
+					"clearCart:",
+					clearResult?.carts
+						? `成功清空購物車，目前 ${clearResult.carts.length} 筆商品`
+						: "已送出請求，但回傳格式需確認",
+				);
+			}
+		} catch (error) {
+			console.log("clearCart 錯誤:", error.message);
+		}
+
+		// ========================================
+		// 最後確認購物車狀態
+		// ========================================
+		console.log("\n--- 最後確認購物車狀態 ---");
+
+		try {
+			const finalCart = await getCart();
+
+			console.log(
+				"最後購物車狀態:",
+				finalCart
+					? `購物車有 ${finalCart.carts?.length || 0} 筆商品，總金額 ${finalCart.total || 0}，折扣後金額 ${finalCart.finalTotal || 0}`
+					: "回傳 undefined",
+			);
+		} catch (error) {
+			console.log("最後購物車狀態錯誤:", error.message);
 		}
 
 		console.log("\n=== 測試結束 ===");
